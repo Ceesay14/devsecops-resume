@@ -1,0 +1,19 @@
+name: DevSecOps Security Scan
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  security-audit:
+    runs-mode: ubuntu-latest
+    steps:
+    - name: Checkout Source Code
+      uses: actions/checkout@v4
+
+    - name: Run Semgrep Code Scan
+      name: semgrep/action@v1
+      with:
+        config: p/security-audit
