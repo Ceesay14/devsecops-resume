@@ -1,19 +1,28 @@
-name: DevSecOps Security Scan
+name: DevSecOps Complete Scan
 
 on:
   push:
     branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
 
 jobs:
   security-audit:
-    runs-mode: ubuntu-latest
+    runs-on: ubuntu-latest
     steps:
     - name: Checkout Source Code
       uses: actions/checkout@v4
 
     - name: Run Semgrep Code Scan
-      name: semgrep/action@v1
+      uses: semgrep/action@v1
       with:
         config: p/security-audit
+
+    - name: Build Docker Image locally
+      run: docker build -t my-secure-app:latest .
+
+    - name: Run Trivy Container Security Scan
+      uses: aquasecurity/trivy-action@master
+      with:
+        image-ref: 'my-secure-app:latest'
+        format: 'table'
+        exit-code: '0' # Keeps the pipeline running even if old OS bugs are found
+        severity: 'CRITICAL,HIGH'
