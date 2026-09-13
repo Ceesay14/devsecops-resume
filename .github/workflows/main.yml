@@ -1,11 +1,11 @@
-name: DevSecOps Complete Scan
+name: DevSecOps Build and Push to AWS ECR
 
 on:
   push:
     branches: [ "main" ]
 
 jobs:
-  security-audit:
+  security-and-deploy:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout Source Code
@@ -16,13 +16,22 @@ jobs:
       with:
         config: p/security-audit
 
-    - name: Build Docker Image locally
-      run: docker build -t my-secure-app:latest .
-
-    - name: Run Trivy Container Security Scan
-      uses: aquasecurity/trivy-action@master
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v4
       with:
-        image-ref: 'my-secure-app:latest'
-        format: 'table'
-        exit-code: '0' # Keeps the pipeline running even if old OS bugs are found
-        severity: 'CRITICAL,HIGH'
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ secrets.AWS_REGION }}
+
+    - name: Log in to AWS ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v2
+
+    - name: Build, Tag, and Push Image to AWS ECR
+      env:
+        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY }}
+        IMAGE_TAG: latest
+      run: |
+        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+        docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
