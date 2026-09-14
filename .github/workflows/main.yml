@@ -1,11 +1,11 @@
-name: DevSecOps Build and Push to AWS ECR
+name: DevSecOps End-to-End CI/CD Pipeline
 
 on:
   push:
     branches: [ "main" ]
 
 jobs:
-  security-and-deploy:
+  security-build-and-deploy:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Source Code
@@ -36,3 +36,23 @@ jobs:
         run: |
           docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+
+      - name: Automated Deployment to AWS EC2
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.EC2_PUBLIC_IP }}
+          username: ec2-user
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            # Authenticate Docker against ECR on the server using its IAM profile
+            aws ecr get-login-password --region us-east-2 | docker login --username AWS --password-stdin ://amazonaws.com
+            
+            # Pull down the brand new image built during this run
+            docker pull ://amazonaws.com/my-secure-app:latest
+            
+            # Stop and remove the old running application container if it exists
+            docker stop my-running-app || true
+            docker rm my-running-app || true
+            
+            # Launch the clean, updated container live on port 5000
+            docker run -d -p 5000:5000 --name my-running-app ://amazonaws.com/my-secure-app:latest
