@@ -15,7 +15,7 @@ jobs:
       uses: returntocorp/semgrep-action@v1
       with:
         config: p/security-audit
-        auditiOn
+        auditiOn: push
 
     - name: Configure AWS Credentials
       uses: aws-actions/configure-aws-credentials@v4
