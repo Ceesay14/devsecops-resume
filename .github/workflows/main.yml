@@ -44,8 +44,8 @@ jobs:
           username: ec2-user
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            aws ecr get-login-password --region us-east-2 | docker login --username AWS --password-stdin ://amazonaws.com
-            docker pull ://amazonaws.com/my-secure-app:latest
-            docker stop my-running-app || true
-            docker rm my-running-app || true
-            docker run -d -p 5000:5000 --name my-running-app ://amazonaws.com/my-secure-app:latest
+            /bin/bash -l -c "aws ecr get-login-password --region us-east-2 | docker login --username AWS --password-stdin ://amazonaws.com"
+            /bin/bash -l -c "docker pull ://amazonaws.com/my-secure-app:latest"
+            /bin/bash -l -c "docker stop my-running-app || true"
+            /bin/bash -l -c "docker rm my-running-app || true"
+            /bin/bash -l -c "docker run -d -p 5000:5000 --name my-running-app ://amazonaws.com/my-secure-app:latest"
