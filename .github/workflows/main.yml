@@ -44,13 +44,13 @@ jobs:
           username: ec2-user
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            # Authenticate Docker against ECR on the server using its IAM profile
+            # Authenticate Docker against ECR
             aws ecr get-login-password --region us-east-2 | docker login --username AWS --password-stdin ://amazonaws.com
             
-            # Pull down the brand new image built during this run
+            # Pull down the brand new image
             docker pull ://amazonaws.com/my-secure-app:latest
             
-            # Stop and remove the old running application container if it exists
+            # Stop and remove the old running container if it exists
             docker stop my-running-app || true
             docker rm my-running-app || true
             
