@@ -16,7 +16,7 @@ def login():
     query = f"SELECT * FROM users WHERE username = '{username}'"
     cursor.execute(query)
     
-    return "Login Processed"
+    return "Login Processed - secure continues deployment"
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
