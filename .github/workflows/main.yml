@@ -13,9 +13,9 @@ jobs:
 
       - name: Run Semgrep Code Scan
         uses: returntocorp/semgrep-action@v1
+        continue-on-error: true
         with:
           config: p/security-audit
-          continue-on-error: true
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
