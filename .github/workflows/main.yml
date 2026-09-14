@@ -1,4 +1,4 @@
-name: DevSecOps End-to-End CI/CD Pipeline
+End-to-End CI/CD Pipeline
 
 on:
   push:
@@ -55,4 +55,3 @@ jobs:
             docker pull ://amazonaws.com/my-secure-app:latest
             docker stop my-running-app || true
             docker rm my-running-app || true
-            docker run -d -p 5000:5000 --name my-running-app ://amazonaws.com/my-secure-app:latest
