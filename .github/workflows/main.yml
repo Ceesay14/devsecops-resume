@@ -37,6 +37,13 @@ jobs:
           docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
 
+      - name: Get ECR Login Token
+        id: get-token
+        run: |
+          TOKEN=$(aws ecr get-login-password --region us-east-2)
+          echo "::add-mask::$TOKEN"
+          echo "token=$TOKEN" >> $GITHUB_OUTPUT
+
       - name: Automated Deployment to AWS EC2
         uses: appleboy/ssh-action@master
         with:
@@ -44,8 +51,8 @@ jobs:
           username: ec2-user
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            /bin/bash -l -c "aws ecr get-login-password --region us-east-2 | docker login --username AWS --password-stdin ://amazonaws.com"
-            /bin/bash -l -c "docker pull ://amazonaws.com/my-secure-app:latest"
-            /bin/bash -l -c "docker stop my-running-app || true"
-            /bin/bash -l -c "docker rm my-running-app || true"
-            /bin/bash -l -c "docker run -d -p 5000:5000 --name my-running-app ://amazonaws.com/my-secure-app:latest"
+            echo "${{ steps.get-token.outputs.token }}" | docker login --username AWS --password-stdin ://amazonaws.com
+            docker pull ://amazonaws.com/my-secure-app:latest
+            docker stop my-running-app || true
+            docker rm my-running-app || true
+            docker run -d -p 5000:5000 --name my-running-app ://amazonaws.com/my-secure-app:latest
