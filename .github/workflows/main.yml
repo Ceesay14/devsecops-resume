@@ -40,9 +40,27 @@ jobs:
 
       - name: Automated Deployment to AWS EC2
         uses: appleboy/ssh-action@master
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: us-east-2
         with:
           host: 3.144.193.174
           username: ec2-user
           key: ${{ secrets.EC2_SSH_KEY }}
+          envs: AWS_ACCESS_KEY_ID,AWS_SECRET_ACCESS_KEY,AWS_DEFAULT_REGION
           script: |
-            bash /home/ec2-user/deploy.sh
+            # 1. Clear any old session tokens
+            docker logout || true
+            docker logout ://amazonaws.com || true
+            
+            # 2. Log in using the passed environment variables
+            aws ecr get-login-password --region us-east-2 | docker login --username AWS --password-stdin ://amazonaws.com
+            
+            # 3. Clean up the older running application container environment safely
+            docker stop my-running-app || true
+            docker rm my-running-app || true
+            
+            # 4. Pull down the fresh image update and run it live
+            docker pull ://amazonaws.com/my-secure-app:latest
+            docker run -d -p 5000:5000 --name my-running-app ://amazonaws.com/my-secure-app:latest
