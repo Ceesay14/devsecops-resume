@@ -40,24 +40,18 @@ jobs:
 
       - name: Automated Deployment to AWS EC2
         uses: appleboy/ssh-action@master
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_DEFAULT_REGION: us-east-2
         with:
           host: 3.144.193.174
           username: ec2-user
           key: ${{ secrets.EC2_SSH_KEY }}
-          envs: AWS_ACCESS_KEY_ID,AWS_SECRET_ACCESS_KEY,AWS_DEFAULT_REGION
           script: |
-            # 1. Clear any old session tokens
-            docker logout || true
+            # 1. Clear any old session token caches completely
             docker logout ://amazonaws.com || true
             
-            # 2. Log in using the passed environment variables
+            # 2. Authenticate directly via the server's newly attached IAM role policy
             aws ecr get-login-password --region us-east-2 | docker login --username AWS --password-stdin ://amazonaws.com
             
-            # 3. Clean up the older running application container environment safely
+            # 3. Clean up the older application container safely
             docker stop my-running-app || true
             docker rm my-running-app || true
             
