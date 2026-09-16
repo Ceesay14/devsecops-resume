@@ -4,46 +4,44 @@ import os
 
 app = Flask(__name__)
 
-# SECURITY FLAW: Hardcoded API Secret Key (Your scanner should catch this!)
-API_SECRET_KEY = "SUPER_SECRET_PASSWORD_12345"
+# SECURED: Loaded dynamically from an environment variable instead of hardcoded plaintext
+API_SECRET_KEY = os.environ.get("API_SECRET_KEY", "fallback_secure_random_string_here")
 
 def init_db():
     """Ensures the database file and users table exist before handling requests"""
     conn = sqlite3.connect('users.db')
     cursor = conn.cursor()
-    # Create the table if it's missing to prevent 500 Internal Server errors
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             username TEXT NOT NULL
         )
     ''')
-    # Insert a dummy user to query against if the table was empty
     cursor.execute("SELECT COUNT(*) FROM users")
-    if cursor.fetchone()[0] == 0:
+    if cursor.fetchone() == 0:
         cursor.execute("INSERT INTO users (username) VALUES ('admin')")
     conn.commit()
     conn.close()
 
-# Initialize database mapping on startup
 init_db()
 
 @app.route("/")
 def home():
-    """New default landing page so the plain IP address doesn't throw a 404"""
+    """Default landing page"""
     return "Welcome to the DevSecOps Main Application Home! Navigate to /login to test the pipeline."
 
 @app.route("/login")
 def login():
-    username = request.args.get('username', 'admin') # Default to 'admin' if no parameter passed
+    username = request.args.get('username', 'admin')
 
     try:
         conn = sqlite3.connect('users.db')
         cursor = conn.cursor()
         
-        # SECURITY FLAW: SQL Injection Vulnerability (Your scanner should catch this too!)
-        query = f"SELECT * FROM users WHERE username = '{username}'"
-        cursor.execute(query)
+        # SECURED: Parameterized query completely blocks SQL Injection attacks!
+        query = "SELECT * FROM users WHERE username = ?"
+        cursor.execute(query, (username,))
+        
         result = cursor.fetchall()
         conn.close()
         
